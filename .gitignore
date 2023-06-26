@@ -1,0 +1,8 @@
+# Tracking project-level dictionaries
+/.idea/*
+!/.idea/dictionaries/
+/.idea/dictionaries/*
+!/.idea/dictionaries/*.xml
+
+/.gradle/
+build/

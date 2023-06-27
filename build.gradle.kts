@@ -1,5 +1,4 @@
 import net.minecraftforge.gradle.userdev.UserDevExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import net.minecraftforge.gradle.userdev.DependencyManagementExtension
 import org.apache.tools.ant.filters.ReplaceTokens
 
@@ -56,7 +55,7 @@ configure<UserDevExtension> {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(8)
 }
 
 val tmpSrc = File(buildDir, "tmpSrc/main/kotlin")
@@ -71,11 +70,6 @@ val tokens = mapOf(
 )
 
 tasks {
-    withType<KotlinCompile>().configureEach {
-        kotlinOptions.allWarningsAsErrors = true
-        kotlinOptions.jvmTarget = "1.8"
-    }
-
     withType<Jar> {
         exclude("META-INF/versions/9/module-info.class")
     }
@@ -86,6 +80,16 @@ tasks {
         from(File(projectDir, "src/main/kotlin/"))
         into(tmpSrc)
         filter<ReplaceTokens>("tokens" to tokens)
+    }
+
+    compileKotlin {
+        doFirst {
+            sourceSets.main.get().kotlin.setSrcDirs(tmpSrc.toPath())
+        }
+
+        kotlinOptions.allWarningsAsErrors = true
+
+        dependsOn("cloneSource")
     }
 
     processResources {

@@ -103,7 +103,8 @@ tasks {
 
         filesMatching(
             listOf(
-                "mcmod.info"
+                "mcmod.info",
+                "**/*.json"
             )
         ) {
             filter<ReplaceTokens>("tokens" to tokens)

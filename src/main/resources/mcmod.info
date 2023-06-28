@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "@modId@",
+    "name": "@modName@",
+    "version": "@modVersion@",
+    "description": "@description@",
+    "url": "@modPage@",
+    "logoFile": "logo.png",
+    "requiredMods": [
+      "kotatsulib",
+      "ngtlib",
+      "rtm"
+    ],
+    "authorList": [@authors@]
+  }
+]

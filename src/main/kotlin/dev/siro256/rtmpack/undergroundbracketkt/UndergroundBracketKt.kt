@@ -16,6 +16,7 @@ import net.minecraft.block.Block
 import net.minecraft.util.ResourceLocation
 import net.minecraftforge.event.RegistryEvent
 import net.minecraftforge.event.entity.player.PlayerInteractEvent
+import net.minecraftforge.fml.client.registry.ClientRegistry
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber
 import net.minecraftforge.fml.common.Mod.EventHandler
@@ -41,7 +42,7 @@ class UndergroundBracketKt {
         GameRegistry.registerTileEntity(TileEntityCustomInsulator::class.java, BlockCustomInsulator.registryName)
 
         if (event.side.isClient) {
-
+            ClientRegistry.bindTileEntitySpecialRenderer(TileEntityCustomInsulator::class.java, CustomInsulatorRenderer)
             loadCustomShaderModel()
         }
     }

@@ -1,0 +1,17 @@
+{
+  "name": "bracket_outer",
+  "tags": "Siro w51 bracket",
+  "connectorType": "Relay",
+
+  "smoothing": true,
+  "doCulling": true,
+  "wirePos": [-0.15, 0.3375, 0.0],
+
+  "buttonTexture": "@modId@:textures/bracket_outer.png",
+  "model": {
+    "modelFile": "undergroundbracketkt/bracket.obj",
+    "textures": [
+      ["default", "@modId@:textures/bracket.png", ""]
+    ]
+  }
+}

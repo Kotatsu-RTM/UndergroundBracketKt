@@ -7,20 +7,29 @@ import dev.siro256.rtmpack.undergroundbracketkt.UndergroundBracketKt.Companion.M
 import dev.siro256.rtmpack.undergroundbracketkt.UndergroundBracketKt.Companion.MOD_VERSION
 import jp.ngt.ngtlib.renderer.model.ModelLoader
 import jp.ngt.ngtlib.renderer.model.VecAccuracy
+import jp.ngt.rtm.RTMItem
+import jp.ngt.rtm.item.ItemInstalledObject
 import jp.ngt.rtm.modelpack.ModelPackManager
 import jp.ngt.rtm.modelpack.cfg.ModelConfig
 import jp.ngt.rtm.modelpack.cfg.ResourceConfig
+import net.minecraft.block.Block
 import net.minecraft.util.ResourceLocation
+import net.minecraftforge.event.RegistryEvent
+import net.minecraftforge.event.entity.player.PlayerInteractEvent
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber
 import net.minecraftforge.fml.common.Mod.EventHandler
 import net.minecraftforge.fml.common.ProgressManager
 import net.minecraftforge.fml.common.event.FMLInitializationEvent
+import net.minecraftforge.fml.common.eventhandler.Event
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.registry.GameRegistry
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import java.io.File
 import java.net.URI
 import java.util.zip.ZipFile
+import kotlin.math.sign
 
 @Mod(modid = MOD_ID, name = MOD_NAME, version = MOD_VERSION)
 @EventBusSubscriber(modid = MOD_ID)
@@ -29,7 +38,10 @@ class UndergroundBracketKt {
     fun fmlInitEvent(event: FMLInitializationEvent) {
         registerModels()
 
+        GameRegistry.registerTileEntity(TileEntityCustomInsulator::class.java, BlockCustomInsulator.registryName)
+
         if (event.side.isClient) {
+
             loadCustomShaderModel()
         }
     }
@@ -85,5 +97,48 @@ class UndergroundBracketKt {
 
         val logger: Logger = LogManager.getLogger(MOD_NAME)
         val customModels = mutableMapOf<String, Model>()
+
+        @JvmStatic
+        @SubscribeEvent
+        fun registerBlocks(event: RegistryEvent.Register<Block>) {
+            logger.info("Register blocks")
+
+            event.registry.register(BlockCustomInsulator)
+        }
+
+        @JvmStatic
+        @SubscribeEvent
+        fun onUseItem(event: PlayerInteractEvent.RightClickBlock) {
+            if (!event.side.isServer) return
+
+            val itemStack = event.itemStack
+            val itemInstalledObject = RTMItem.installedObject as ItemInstalledObject
+            if (itemStack.item !is ItemInstalledObject) return
+
+            if (
+                ItemInstalledObject.IstlObjType.getType(itemStack.itemDamage) !=
+                ItemInstalledObject.IstlObjType.INSULATOR
+            ) return
+
+            val state = itemInstalledObject.getModelState(itemStack).writeToNBT()
+            if (!state.getString("ResourceName").contains(MOD_ID)) return
+
+            val world = event.world
+            val face = event.face!!
+            val pos = event.pos.offset(face)
+
+            world.setBlockState(pos, BlockCustomInsulator.defaultState)
+
+            val tileEntity = world.getTileEntity(pos) as TileEntityCustomInsulator
+            val yaw = event.entityPlayer.rotationYaw
+
+            tileEntity.resourceState.readFromNBT(state)
+            tileEntity.yaw = ((if (yaw.sign == -1.0F) yaw + 360.0F else yaw) + 7.5f).toInt() / 15 * 15.0F
+
+
+            tileEntity.updateResourceState()
+
+            event.useItem = Event.Result.DENY
+        }
     }
 }

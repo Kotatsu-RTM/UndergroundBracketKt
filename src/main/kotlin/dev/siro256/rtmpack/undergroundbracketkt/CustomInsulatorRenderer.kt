@@ -72,23 +72,23 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
         val model = UndergroundBracketKt.customModels["models/undergroundbracketkt/bracket.obj"] as BracketModel
 
         val resourceSet = tileEntity.resourceState.resourceSet
-        val modelViewMatrix =
+        val viewMatrix =
             matrixBuffer.apply {
                 rewind()
                 GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, this)
                 rewind()
             }.let { Matrix4f(it) }
 
-        val modelMatrix = Matrix4f()
         val offset = tileEntity.offset
 
-        modelMatrix
-            .translate(x.toFloat() + 0.5F, y.toFloat() + 0.5F, z.toFloat() + 0.5F)
-            .translate(Vector3f(resourceSet.config.offset))
-            .translate(Vector3f(offset.x.toFloat(), offset.y.toFloat(), offset.z.toFloat()))
-            .rotateY(-tileEntity.yaw.toRadians())
-            .rotateY(tileEntity.offsetYaw.toRadians())
-            .rotateZ(180.0F.toRadians())
+        val modelMatrix =
+            Matrix4f()
+                .translate(x.toFloat() + 0.5F, y.toFloat() + 0.5F, z.toFloat() + 0.5F)
+                .translate(Vector3f(resourceSet.config.offset))
+                .translate(Vector3f(offset.x.toFloat(), offset.y.toFloat(), offset.z.toFloat()))
+                .rotateY(-tileEntity.yaw.toRadians())
+                .rotateY(tileEntity.offsetYaw.toRadians())
+                .rotateZ(180.0F.toRadians())
 
         val lightMapCoords =
             Vector2f((OpenGlHelper.lastBrightnessX + 8.0F) / 256.0F, (OpenGlHelper.lastBrightnessY + 8.0F) / 256.0F)
@@ -111,7 +111,7 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
                 .setLightMapCoords(lightMapCoords)
 
         shader
-            .setModelView(Matrix4f(modelViewMatrix).mul(modelMatrix), Matrix4f(modelMatrix).invert())
+            .setModelView(modelMatrix, viewMatrix)
             .useModel(model.staticObjects)
             .render()
 
@@ -120,7 +120,7 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
         }
 
         shader
-            .setModelView(modelViewMatrix.mul(modelMatrix), modelMatrix.invert())
+            .setModelView(modelMatrix, viewMatrix)
             .useModel(model.connectionPoint)
             .render()
     }

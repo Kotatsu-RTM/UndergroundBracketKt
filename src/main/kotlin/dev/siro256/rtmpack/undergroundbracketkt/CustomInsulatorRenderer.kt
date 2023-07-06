@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer
 import net.minecraftforge.client.MinecraftForgeClient
 import net.minecraftforge.fml.common.Loader
 import org.joml.Matrix4f
+import org.joml.Matrix4fStack
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL11
@@ -81,14 +82,13 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
 
         val offset = tileEntity.offset
 
-        val modelMatrix =
-            Matrix4f()
-                .translate(x.toFloat() + 0.5F, y.toFloat() + 0.5F, z.toFloat() + 0.5F)
-                .translate(Vector3f(resourceSet.config.offset))
-                .translate(Vector3f(offset.x.toFloat(), offset.y.toFloat(), offset.z.toFloat()))
-                .rotateY(-tileEntity.yaw.toRadians())
-                .rotateY(tileEntity.offsetYaw.toRadians())
-                .rotateZ(180.0F.toRadians())
+        val modelStack = Matrix4fStack(2)
+        modelStack.translate(x.toFloat() + 0.5F, y.toFloat() + 0.5F, z.toFloat() + 0.5F)
+        modelStack.translate(Vector3f(resourceSet.config.offset))
+        modelStack.translate(Vector3f(offset.x.toFloat(), 0.0F, offset.z.toFloat()))
+        modelStack.rotateY(-tileEntity.yaw.toRadians())
+        modelStack.rotateY(tileEntity.offsetYaw.toRadians())
+        modelStack.rotateZ(180.0F.toRadians())
 
         val lightMapCoords =
             Vector2f((OpenGlHelper.lastBrightnessX + 8.0F) / 256.0F, (OpenGlHelper.lastBrightnessY + 8.0F) / 256.0F)
@@ -111,18 +111,28 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
                 .setLightMapCoords(lightMapCoords)
 
         shader
-            .setModelView(modelMatrix, viewMatrix)
-            .useModel(model.staticObjects)
+            .setModelView(modelStack, viewMatrix)
+            .useModel(model.poleBase)
             .render()
 
-        if (tileEntity.resourceState.resourceName.contains("outer")) {
-            modelMatrix.rotateY(180.0F.toRadians())
-        }
+        modelStack.pushMatrix()
+        modelStack.translate(0.0F, -offset.y.toFloat(), 0.0F)
 
         shader
-            .setModelView(modelMatrix, viewMatrix)
-            .useModel(model.connectionPoint)
+            .setModelView(modelStack, viewMatrix)
+            .useModel(model.offsetableObjects)
             .render()
+            .also {
+                if (offset.y.toFloat() == 0.0F) return
+                it.useModel(model.poleExtensionPipe).render()
+            }
+
+        if (tileEntity.resourceState.resourceName.contains("outer"))
+            modelStack.rotateY(180.0F.toRadians())
+
+        shader.setModelView(modelStack, viewMatrix).useModel(model.connectionPoint).render()
+
+        modelStack.popMatrix()
     }
 
     override fun isGlobalRenderer(tileEntity: TileEntityCustomInsulator) = true

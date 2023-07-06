@@ -123,7 +123,7 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
             .useModel(model.offsetableObjects)
             .render()
             .also {
-                if (offset.y.toFloat() == 0.0F) return
+                if (offset.y.toFloat() == 0.0F) return@also
                 it.useModel(model.poleExtensionPipe).render()
             }
 

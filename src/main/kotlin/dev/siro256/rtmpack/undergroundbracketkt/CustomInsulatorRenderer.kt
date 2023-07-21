@@ -8,29 +8,21 @@ import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Compa
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setModelView
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setTexture
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.useModel
+import com.github.kotatsu_rtm.kotatsulib.mc1_12_2.api.gl.GLStateImpl
 import jp.ngt.rtm.electric.RenderElectricalWiring
 import jp.ngt.rtm.electric.TileEntityConnectorBase
 import jp.ngt.rtm.electric.TileEntityElectricalWiring
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.GLAllocation
 import net.minecraft.client.renderer.OpenGlHelper
 import net.minecraft.client.renderer.texture.SimpleTexture
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer
 import net.minecraftforge.client.MinecraftForgeClient
 import net.minecraftforge.fml.common.Loader
-import org.joml.Matrix4f
 import org.joml.Matrix4fStack
 import org.joml.Vector2f
 import org.joml.Vector3f
-import org.lwjgl.opengl.GL11
-import kotlin.properties.Delegates
 
 object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsulator>() {
-    private var previousFrameIndex = Int.MIN_VALUE
-
-    private var projectionMatrix by Delegates.notNull<Matrix4f>()
-    private val matrixBuffer = GLAllocation.createDirectFloatBuffer(16)
-
     override fun render(
         tileEntity: TileEntityCustomInsulator,
         x: Double, y: Double, z: Double,
@@ -59,26 +51,10 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
 
         if (pass != 0) return
 
-        val frameIndex = Minecraft.getMinecraft().frameTimer.index
-        if (previousFrameIndex != frameIndex) {
-            previousFrameIndex = frameIndex
-            projectionMatrix =
-                matrixBuffer.apply {
-                    rewind()
-                    GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, this)
-                    rewind()
-                }.let { Matrix4f(it) }
-        }
-
         val model = UndergroundBracketKt.customModels["models/undergroundbracketkt/bracket.obj"] as BracketModel
 
         val resourceSet = tileEntity.resourceState.resourceSet
-        val viewMatrix =
-            matrixBuffer.apply {
-                rewind()
-                GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, this)
-                rewind()
-            }.let { Matrix4f(it) }
+        val viewMatrix = GLStateImpl.getView()
 
         val offset = tileEntity.offset
 
@@ -104,7 +80,7 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
             }
         val shader =
             TexturedShader
-                .updateProjection(projectionMatrix)
+                .updateProjection(GLStateImpl.getProjection())
                 .setMaterial(0)
                 .setTexture(texture)
                 .bindVBO(model.vbo)

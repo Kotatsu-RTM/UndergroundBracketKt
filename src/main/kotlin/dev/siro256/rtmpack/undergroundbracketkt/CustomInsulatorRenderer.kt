@@ -5,7 +5,7 @@ import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Compa
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.render
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setLightMapCoords
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setMaterial
-import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setModelView
+import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setModelMatrix
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.setTexture
 import com.github.kotatsu_rtm.kotatsulib.api.shader.TexturedShader.Builder.Companion.useModel
 import com.github.kotatsu_rtm.kotatsulib.mc1_12_2.api.gl.GLStateImpl
@@ -54,8 +54,6 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
         val model = UndergroundBracketKt.customModels["models/undergroundbracketkt/bracket.obj"] as BracketModel
 
         val resourceSet = tileEntity.resourceState.resourceSet
-        val viewMatrix = GLStateImpl.getView()
-
         val offset = tileEntity.offset
 
         val modelStack = Matrix4fStack(2)
@@ -80,14 +78,14 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
             }
         val shader =
             TexturedShader
-                .updateProjection(GLStateImpl.getProjection())
+                .setViewAndProjectionMatrix(GLStateImpl.getView(), GLStateImpl.getProjection())
                 .setMaterial(0)
                 .setTexture(texture)
                 .bindVBO(model.vbo)
                 .setLightMapCoords(lightMapCoords)
 
         shader
-            .setModelView(modelStack, viewMatrix)
+            .setModelMatrix(modelStack)
             .useModel(model.poleBase)
             .render()
 
@@ -95,7 +93,7 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
         modelStack.translate(0.0F, -offset.y.toFloat(), 0.0F)
 
         shader
-            .setModelView(modelStack, viewMatrix)
+            .setModelMatrix(modelStack)
             .useModel(model.offsetableObjects)
             .render()
             .also {
@@ -106,7 +104,7 @@ object CustomInsulatorRenderer : TileEntitySpecialRenderer<TileEntityCustomInsul
         if (tileEntity.resourceState.resourceName.contains("outer"))
             modelStack.rotateY(180.0F.toRadians())
 
-        shader.setModelView(modelStack, viewMatrix).useModel(model.connectionPoint).render()
+        shader.setModelMatrix(modelStack).useModel(model.connectionPoint).render()
 
         modelStack.popMatrix()
     }
